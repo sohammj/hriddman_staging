@@ -9,6 +9,11 @@ import ShinyText from "@/components/ShinyText"
 
 import Aurora from '@/components/Aurora';
 
+import EventPopup from "@/components/EventPopup";
+import { EVENT_QUERY } from "@/lib/queries";
+import type { EventType } from "@/lib/types";
+
+
 
 
 
@@ -81,11 +86,12 @@ type Settings = {
 export const revalidate = 60
 
 export default async function HomePage() {
-  const [home, services, testimonials, settings] = await Promise.all([
+  const [home, services, testimonials, settings, event] = await Promise.all([
     sanityClient.fetch<Home>(HOME_QUERY),
     sanityClient.fetch<Service[]>(SERVICES_QUERY),
     sanityClient.fetch<Testimonial[]>(TESTIMONIALS_QUERY),
     sanityClient.fetch<Settings>(SETTINGS_QUERY),
+    sanityClient.fetch<EventType | null>(EVENT_QUERY),
   ])
 
   return (
@@ -94,6 +100,38 @@ export default async function HomePage() {
       <ScrollAnimations />
       <HeaderEffects />
       <Reveal />
+
+      {event && (
+        <>
+          <EventPopup event={event} />
+          <section id="event" className="py-20 card-soft text-center">
+            <div className="container max-w-3xl">
+              <h2 className="fw-semibold mb-3">{event.title}</h2>
+              <p className="text-dark mb-4">{event.description}</p>
+
+              {event.flyer?.asset && (
+                <div className="mb-4">
+                  <Image
+                    src={urlFor(event.flyer).width(1000).url()}
+                    alt="Event flyer"
+                    width={1000}
+                    height={700}
+                    className="rounded-4 img-fluid"
+                  />
+                </div>
+              )}
+
+              {event.link && (
+                <Link href={event.link} target="_blank" className="btn btn-primary">
+                  View Event
+                </Link>
+              )}
+            </div>
+          </section>
+          <div className="section-divider" />
+        </>
+      )}
+
 
 
 

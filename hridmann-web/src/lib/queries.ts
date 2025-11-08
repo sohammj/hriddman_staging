@@ -152,3 +152,14 @@ export const SETTINGS_QUERY = groq`*[_type == "settings"][0]{
   }
 }`;
 
+export const EVENT_QUERY = `
+  *[_type == "event" && dateTime(bannerExpiry) >= now()] 
+  | order(date asc)[0]{
+    title,
+    description,
+    date,
+    bannerExpiry,
+    flyer,
+    link
+  }
+`;
