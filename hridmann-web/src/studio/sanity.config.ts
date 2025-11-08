@@ -5,8 +5,8 @@ import {schemas} from './schemas'
 
 export default defineConfig({
   name: 'default',
-  title: 'Hridmann',
-  projectId: 'mm6jo5xz',
+  title: 'hridmann staging',
+  projectId: 'ojhg4vsl',
   dataset: 'production',
   basePath: '/studio',
   plugins: [deskTool(), visionTool()],

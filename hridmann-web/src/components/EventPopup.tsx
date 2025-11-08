@@ -1,70 +1,92 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { urlFor } from "@/lib/image";
 import type { EventType } from "@/lib/types";
 
-interface Props {
-  event: EventType;
-}
-
-export default function EventPopup({ event }: Props) {
-  const [show, setShow] = useState(false);
+export default function EventPopup({ event }: { event: EventType }) {
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const dismissed = localStorage.getItem("hridmannEventDismissed");
-    const now = new Date();
-    if (!dismissed && new Date(event.bannerExpiry) > now) {
-      setShow(true);
+    const dismissed = sessionStorage.getItem("event_popup_dismissed");
+    if (!dismissed) {
+      const timer = setTimeout(() => setVisible(true), 2000); // 2-second delay
+      return () => clearTimeout(timer);
     }
-  }, [event]);
+  }, []);
 
-  if (!show) return null;
-
-  const handleClose = (): void => {
-    localStorage.setItem("hridmannEventDismissed", "true");
-    setShow(false);
+  const handleClose = () => {
+    setVisible(false);
+    sessionStorage.setItem("event_popup_dismissed", "true");
   };
 
+  if (!visible) return null;
+
+  // 👇 full-screen overlay that sits above everything
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-[2000]">
-      <div className="bg-white rounded-3xl shadow-xl p-6 max-w-md w-full relative animate-fadeIn">
+    <div className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center animate-fadeIn">
+      <div className="relative w-[90%] max-w-5xl h-[80vh] bg-white overflow-hidden rounded-2xl shadow-2xl flex flex-col md:flex-row animate-slideUp">
+        {/* Close */}
         <button
-          className="absolute top-3 right-4 text-gray-500 hover:text-gray-700 text-2xl"
           onClick={handleClose}
-          aria-label="Close popup"
+          className="absolute top-4 right-4 text-gray-500 hover:text-gray-800 text-xl transition"
         >
-          ×
+          ✕
         </button>
 
-        {event.flyer?.asset && (
-          <div className="mb-4 rounded-lg overflow-hidden">
+        {/* Left content */}
+        <div className="flex-1 p-8 flex flex-col justify-center text-left bg-white/95 backdrop-blur-md">
+          <h1 className="text-3xl md:text-4xl font-semibold text-[#0E1E2A] mb-4">
+            {event.title}
+          </h1>
+          {event.description && (
+            <p className="text-gray-600 text-lg leading-relaxed mb-6 max-w-md">
+              {event.description}
+            </p>
+          )}
+          {event.link && (
+            <Link
+              href={event.link}
+              target="_blank"
+              className="bg-[#0E1E2A] hover:bg-[#007b7f] text-white font-medium py-3 px-8 rounded-full text-center w-fit transition-all"
+            >
+              Learn More
+            </Link>
+          )}
+        </div>
+
+        {/* Right banner image */}
+        <div className="hidden md:block flex-1 relative">
+          {event.flyer?.asset?.url ? (
             <Image
-              src={urlFor(event.flyer).width(600).height(400).url()}
-              alt="Event flyer"
-              width={600}
-              height={400}
-              className="w-full object-cover"
+              src={event.flyer.asset.url}
+              alt={event.title}
+              fill
+              className="object-cover"
+              priority
             />
-          </div>
-        )}
-
-        <h2 className="text-2xl font-semibold mb-2">{event.title}</h2>
-        <p className="text-gray-600 mb-4">{event.description}</p>
-
-        {event.link && (
-          <Link
-            href={event.link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary w-full"
-          >
-            Learn More
-          </Link>
-        )}
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-400" />
+          )}
+        </div>
       </div>
+
+      <style jsx global>{`
+        body {
+          overflow: hidden;
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(40px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out forwards; }
+        .animate-slideUp { animation: slideUp 0.4s ease-out forwards; }
+      `}</style>
     </div>
   );
 }

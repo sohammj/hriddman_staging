@@ -9,9 +9,10 @@ import ShinyText from "@/components/ShinyText"
 
 import Aurora from '@/components/Aurora';
 
-import EventPopup from "@/components/EventPopup";
-import { EVENT_QUERY } from "@/lib/queries";
+import { EVENTS_QUERY } from "@/lib/queries";
 import type { EventType } from "@/lib/types";
+import EventPopup from "@/components/EventPopup";
+
 
 
 
@@ -86,13 +87,14 @@ type Settings = {
 export const revalidate = 60
 
 export default async function HomePage() {
-  const [home, services, testimonials, settings, event] = await Promise.all([
+  const [home, services, testimonials, settings, events] = await Promise.all([
     sanityClient.fetch<Home>(HOME_QUERY),
     sanityClient.fetch<Service[]>(SERVICES_QUERY),
     sanityClient.fetch<Testimonial[]>(TESTIMONIALS_QUERY),
     sanityClient.fetch<Settings>(SETTINGS_QUERY),
-    sanityClient.fetch<EventType | null>(EVENT_QUERY),
-  ])
+    sanityClient.fetch<EventType[]>(EVENTS_QUERY),
+]);
+
 
   return (
     <main>
@@ -101,46 +103,18 @@ export default async function HomePage() {
       <HeaderEffects />
       <Reveal />
 
-      {event && (
-        <>
-          <EventPopup event={event} />
-          <section id="event" className="py-20 card-soft text-center">
-            <div className="container max-w-3xl">
-              <h2 className="fw-semibold mb-3">{event.title}</h2>
-              <p className="text-dark mb-4">{event.description}</p>
-
-              {event.flyer?.asset && (
-                <div className="mb-4">
-                  <Image
-                    src={urlFor(event.flyer).width(1000).url()}
-                    alt="Event flyer"
-                    width={1000}
-                    height={700}
-                    className="rounded-4 img-fluid"
-                  />
-                </div>
-              )}
-
-              {event.link && (
-                <Link href={event.link} target="_blank" className="btn btn-primary">
-                  View Event
-                </Link>
-              )}
-            </div>
-          </section>
-          <div className="section-divider" />
-        </>
-      )}
 
 
 
 
-
-
-
-
-
-
+      {/* Popup only if some event has a future bannerExpiry */}
+      {/* ✅ safer popup logic */}
+      {(() => {
+        const upcomingEvent = events.find(
+          (ev) => new Date(ev.bannerExpiry || "") > new Date()
+        );
+        return upcomingEvent ? <EventPopup event={upcomingEvent} /> : null;
+      })()}
 
 
 
@@ -415,6 +389,114 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ✅ EVENTS SECTION — styled exactly like other sections */}
+      {events && events.length > 0 && (
+        <>
+          <section id="events" className="section-pad card-soft">
+            <div className="container">
+              {/* Heading */}
+              <div className="row justify-content-center text-center mb-4">
+                <div className="col-lg-8">
+                  <h2 className="fw-semibold">Events & Workshops</h2>
+                  <p className="text-dark">
+                    Explore our latest sessions, talks, and workshops.
+                  </p>
+                </div>
+              </div>
+
+              {/* ✅ Scrollable if many, Centered if one */}
+              <div
+                className={`events-scroll d-flex gap-4 pb-3 ${
+                  events.length === 1
+                    ? "justify-content-center flex-wrap"
+                    : "overflow-auto"
+                }`}
+                style={{
+                  scrollSnapType:
+                    events.length > 1 ? "x mandatory" : "none",
+                }}
+              >
+                {events.map((event, i) => {
+                  const isPast =
+                    event.date && new Date(event.date) < new Date();
+
+                  return (
+                    <div
+                      key={event._id ?? `event-${i}`}
+                      className={`flex-shrink-0 ${
+                        events.length === 1 ? "" : ""
+                      }`}
+                      style={{
+                        width: "340px",
+                        scrollSnapAlign: "start",
+                      }}
+                    >
+                      <div
+                        className={`card card-soft h-100 border-0 shadow-sm transition-all duration-300 ${
+                          isPast ? "opacity-75" : ""
+                        }`}
+                      >
+                        {/* Image */}
+                        {event.flyer?.asset && (
+                          <div className="ratio ratio-16x9 rounded-4 overflow-hidden mb-3">
+                            <Image
+                              src={urlFor(event.flyer)
+                                .width(1000)
+                                .height(600)
+                                .fit("crop")
+                                .url()}
+                              alt={event.title}
+                              width={1000}
+                              height={600}
+                              className="object-fit-cover"
+                            />
+                          </div>
+                        )}
+
+                        {/* Text */}
+                        <div className="card-body p-0 text-start">
+                          <h5 className="fw-semibold mb-2 text-[#0E1E2A]">
+                            {event.title}
+                          </h5>
+
+                          {event.date && (
+                            <p className="text-muted small mb-2">
+                              {new Date(event.date).toLocaleDateString("en-IN", {
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                            </p>
+                          )}
+
+                          <p className="text-dark small mb-3">
+                            {event.description ||
+                              "Join us for this upcoming workshop or event."}
+                          </p>
+
+                          {event.link && (
+                            <Link
+                              href={event.link}
+                              target="_blank"
+                              className="btn btn-link p-0 text-[#007b7f] fw-semibold"
+                            >
+                              View Details <i className="bi bi-arrow-right ms-1" />
+                            </Link>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </section>
+
+          <div className="section-divider" />
+        </>
+      )}
+
 
       {/* CONTACT */}
       <section id="contact" className="section-pad card-soft">
