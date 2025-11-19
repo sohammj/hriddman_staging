@@ -11,7 +11,7 @@ import Aurora from '@/components/Aurora';
 
 import { EVENTS_QUERY } from "@/lib/queries";
 import type { EventType } from "@/lib/types";
-import EventPopup from "@/components/EventPopup";
+
 
 
 
@@ -96,6 +96,9 @@ export default async function HomePage() {
 ]);
 
 
+
+
+
   return (
     <main>
       <Splash logoUrl={settings?.logo?.asset?.url} />
@@ -104,17 +107,9 @@ export default async function HomePage() {
       <Reveal />
 
 
+   
+    
 
-
-
-      {/* Popup only if some event has a future bannerExpiry */}
-      {/* ✅ safer popup logic */}
-      {(() => {
-        const upcomingEvent = events.find(
-          (ev) => new Date(ev.bannerExpiry || "") > new Date()
-        );
-        return upcomingEvent ? <EventPopup event={upcomingEvent} /> : null;
-      })()}
 
 
 
@@ -396,7 +391,7 @@ export default async function HomePage() {
           <section id="events" className="section-pad card-soft">
             <div className="container">
               {/* Heading */}
-              <div className="row justify-content-center text-center mb-4">
+              <div className="row justify-content-center text-center mb-5">
                 <div className="col-lg-8">
                   <h2 className="fw-semibold">Events & Workshops</h2>
                   <p className="text-dark">
@@ -405,17 +400,13 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              {/* ✅ Scrollable if many, Centered if one */}
+              {/* Events Layout */}
               <div
-                className={`events-scroll d-flex gap-4 pb-3 ${
+                className={`${
                   events.length === 1
-                    ? "justify-content-center flex-wrap"
-                    : "overflow-auto"
+                    ? "d-flex justify-content-center"
+                    : "d-flex flex-wrap justify-content-center gap-4"
                 }`}
-                style={{
-                  scrollSnapType:
-                    events.length > 1 ? "x mandatory" : "none",
-                }}
               >
                 {events.map((event, i) => {
                   const isPast =
@@ -424,44 +415,42 @@ export default async function HomePage() {
                   return (
                     <div
                       key={event._id ?? `event-${i}`}
-                      className={`flex-shrink-0 ${
-                        events.length === 1 ? "" : ""
-                      }`}
+                      className="col-md-6 col-lg-4 d-flex"
                       style={{
-                        width: "340px",
-                        scrollSnapAlign: "start",
+                        maxWidth: "420px",
+                        minWidth: "340px",
                       }}
                     >
                       <div
-                        className={`card card-soft h-100 border-0 shadow-sm transition-all duration-300 ${
+                        className={`card card-soft h-100 border-0 shadow-sm transition-all duration-300 w-100 ${
                           isPast ? "opacity-75" : ""
                         }`}
                       >
                         {/* Image */}
                         {event.flyer?.asset && (
-                          <div className="ratio ratio-16x9 rounded-4 overflow-hidden mb-3">
+                          <div className="ratio ratio-16x9 rounded-top-4 overflow-hidden">
                             <Image
                               src={urlFor(event.flyer)
-                                .width(1000)
-                                .height(600)
+                                .width(1200)
+                                .height(800)
                                 .fit("crop")
                                 .url()}
                               alt={event.title}
-                              width={1000}
-                              height={600}
+                              width={1200}
+                              height={800}
                               className="object-fit-cover"
                             />
                           </div>
                         )}
 
                         {/* Text */}
-                        <div className="card-body p-0 text-start">
+                        <div className="card-body px-4 py-4 text-start"> {/* ✅ Added horizontal padding */}
                           <h5 className="fw-semibold mb-2 text-[#0E1E2A]">
                             {event.title}
                           </h5>
 
                           {event.date && (
-                            <p className="text-muted small mb-2">
+                            <p className="text-muted small mb-3">
                               {new Date(event.date).toLocaleDateString("en-IN", {
                                 year: "numeric",
                                 month: "long",
@@ -470,7 +459,10 @@ export default async function HomePage() {
                             </p>
                           )}
 
-                          <p className="text-dark small mb-3">
+                          <p
+                            className="text-dark small lh-base mb-4"
+                            style={{ whiteSpace: "pre-line" }}
+                          >
                             {event.description ||
                               "Join us for this upcoming workshop or event."}
                           </p>
@@ -479,9 +471,9 @@ export default async function HomePage() {
                             <Link
                               href={event.link}
                               target="_blank"
-                              className="btn btn-link p-0 text-[#007b7f] fw-semibold"
+                              className="btn btn-outline-dark btn-sm rounded-pill px-3"
                             >
-                              View Details <i className="bi bi-arrow-right ms-1" />
+                              Learn More
                             </Link>
                           )}
                         </div>
@@ -496,6 +488,8 @@ export default async function HomePage() {
           <div className="section-divider" />
         </>
       )}
+
+
 
 
       {/* CONTACT */}

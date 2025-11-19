@@ -594,3 +594,6 @@ section {
   scrollbar-width: none; /* Firefox */
 }
 
+.event-popup {
+  z-index: 99999 !important;
+}
